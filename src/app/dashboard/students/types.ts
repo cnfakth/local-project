@@ -1,20 +1,27 @@
+import { Date } from "firebase/vertexai";
+
+// src/app/dashboard/students/types.ts
 export type StudentData = {
-  id: string;
+  id: string;           
   name: string;
-  studentId?: string;
+  studentId: string;    
   parentName?: string;
-  phone?: string;
-  lineId?: string;
-  email?: string;
-  address?: string;
-  paymentPeriod?: string;
-  birthDate?: string;
+  phone: string;
+  lineId: string;
+  email: string;
+  address: string;
+  paymentPeriod: string;
+  birthDate: string;
 };
 
 export type AttendanceRecord = {
   date: string;
   className: string;
   status: 'present' | 'absent' | 'sick';
+  startTime?: string;
+  endTime?: string;
+  teacher?: string;
+  classroom?: string;
 };
 
 export type StudentCardProps = {

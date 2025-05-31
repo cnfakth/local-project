@@ -1,21 +1,20 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
-// Type definition based on your existing code
-interface StudentData {
+interface StudentDataInter {
   name: string;
-  studentId: string;
-  parentName: string;
+  studentId?: string;
+  parentName?: string;
   phone: string;
   lineId: string;
-  email: string;
-  address: string;
-  paymentPeriod: string;
-  birthDate: string;
+  email?: string;
+  address?: string;
+  paymentPeriod?: string;
+  birthDate?: string;
 }
 
 interface StudentInfoModalProps {
-  student: StudentData | null;
+  student: StudentDataInter | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -54,7 +53,7 @@ export default function StudentInfoModal({ student, isOpen, onClose }: StudentIn
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
         {/* Header with close button */}
         <div className="relative px-6 pt-4">

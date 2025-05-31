@@ -1,3 +1,4 @@
+// src/app/dashboard/students/StudentsPageContent.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,10 +7,42 @@ import StudentCard from './components/StudentCard';
 import Pagination from './components/Pagination';
 import StudentInfoModal from './components/StudentInfoModal';
 import AttendanceModal from './components/AttendanceModal';
+import PaymentModal from './components/PaymentModal';
 import { mockStudents } from './mockData';
-import { StudentData } from './types';
+import { StudentData } from '@/app/dashboard/students/types';
 import { getAllStudents, Student } from '@/lib/firebase/students';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/clientApp';
 import Sidebar from '@/components/sidebar';
+
+  // Helper function to safely convert to date string
+  const formatBirthDate = (birthday: any): string => {
+    if (!birthday) return '未提供';
+    
+    try {
+      // If it's already a Date object
+      if (birthday instanceof Date) {
+        return birthday.toLocaleDateString('zh-TW');
+      }
+      
+      // If it's a Firestore Timestamp
+      if (birthday.toDate && typeof birthday.toDate === 'function') {
+        return birthday.toDate().toLocaleDateString('zh-TW');
+      }
+      
+      // If it's a string or number, try to convert
+      const date = new Date(birthday);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('zh-TW');
+      }
+      
+      // If all else fails
+      return '日期格式錯誤';
+    } catch (error) {
+      console.error('Error formatting birthday:', error);
+      return '日期轉換失敗';
+    }
+  };
 
 export default function StudentsPageContent() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,6 +53,8 @@ export default function StudentsPageContent() {
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [isBasicInfoModalOpen, setIsBasicInfoModalOpen] = useState(false);
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [studentDocIds, setStudentDocIds] = useState<string[]>([]);
 
   const STUDENTS_PER_PAGE = 6;
 
@@ -45,29 +80,43 @@ export default function StudentsPageContent() {
     const fetchStudents = async () => {
       setLoading(true);
       try {
-        const studentData = await getAllStudents();
+        // Get all students from Firestore
+        const snapshot = await getDocs(collection(db, 'students'));
+        const docIds: string[] = [];
+        const studentData: Student[] = [];
+        
+        snapshot.forEach((doc) => {
+          docIds.push(doc.id);
+          studentData.push(doc.data() as Student);
+        });
+        
+        setStudentDocIds(docIds);
+
         const formatted: StudentData[] = studentData.map((student: Student, index: number) => ({
-          id: `student-${index}`,
-          name: student.Name || '未知學生',
-          studentId: `student-${index}`,
-          parentName: student.Parent || '未提供',
-          phone: student.Phone || student.ParentsPhone || '未提供',
-          lineId: student.Line || '未提供',
-          email: student.Email || '未提供',
-          address: '未提供',
-          paymentPeriod: student.Payment || '未提供',
-          birthDate: student.Birthday ? new Date(student.Birthday).toLocaleDateString('zh-TW') : '未提供',
+          id: docIds[index], // Use the actual Firestore document ID
+          name: student.Name ?? '未知學生',
+          studentId: docIds[index], // Store the actual document ID for reference
+          parentName: student.Parent ?? '未提供',
+          phone: student.Phone,
+          lineId: student.Line, 
+          email: student.Email ?? '未提供',
+          address: '未提供', 
+          paymentPeriod: student.Payment ?? '未提供',
+          birthDate: formatBirthDate(student.Birthday),
         }));
+        
         setStudents(formatted);
         setFilteredStudents(formatted);
       } catch (error) {
         console.error('Error fetching students:', error);
+        // Fallback to mock data if there's an error
         setStudents(mockStudents);
         setFilteredStudents(mockStudents);
       } finally {
         setLoading(false);
       }
     };
+    
     fetchStudents();
   }, []);
 
@@ -86,6 +135,11 @@ export default function StudentsPageContent() {
     setIsAttendanceModalOpen(true);
   };
 
+  const handleShowPayment = (student: StudentData) => {
+    setSelectedStudent(student);
+    setIsPaymentModalOpen(true);
+  };
+
   const handleCloseBasicInfoModal = () => {
     setIsBasicInfoModalOpen(false);
     setSelectedStudent(null);
@@ -95,6 +149,11 @@ export default function StudentsPageContent() {
     setIsAttendanceModalOpen(false);
     setSelectedStudent(null);
   };
+
+  const handleClosePaymentModal = () => {
+    setIsPaymentModalOpen(false);
+    setSelectedStudent(null)
+  }
 
   return (
     <div className="flex">
@@ -112,6 +171,7 @@ export default function StudentsPageContent() {
 
         {loading && (
           <div className="text-center py-8">
+            <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
             <div className="text-gray-600">載入中...</div>
           </div>
         )}
@@ -125,6 +185,7 @@ export default function StudentsPageContent() {
                   student={student} 
                   onShowBasicInfo={handleShowBasicInfo}
                   onShowAttendance={handleShowAttendance}
+                  onShowPayment={handleShowPayment}
                 />
               ))
             ) : (
@@ -158,6 +219,12 @@ export default function StudentsPageContent() {
           student={selectedStudent}
           isOpen={isAttendanceModalOpen}
           onClose={handleCloseAttendanceModal}
+        />
+
+        <PaymentModal
+          student={selectedStudent}
+          isOpen={isPaymentModalOpen}
+          onClose={handleClosePaymentModal}
         />
       </div>
     </div>

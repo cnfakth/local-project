@@ -12,6 +12,8 @@ import {
 
 // Type for your student data
 export type Student = {
+  Line: string;
+  Phone: string;
   Birthday: Date;
   Email: string;
   Name: string;
@@ -34,7 +36,8 @@ export async function getAllStudents(): Promise<Student[]> {
       const data = doc.data();
       return {
         ...data,
-        Birthday: data.Birthday.toDate(), 
+        Birthday: data.Birthday && data.Birthday.toDate ? data.Birthday.toDate() : 
+                data.Birthday ? new Date(data.Birthday) : new Date(), 
       } as Student;
     });
   }

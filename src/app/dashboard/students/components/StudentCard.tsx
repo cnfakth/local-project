@@ -1,16 +1,14 @@
 import React from 'react';
-
-interface StudentData {
-  name: string;
-}
+import { StudentData } from '../types';
 
 interface StudentCardProps {
   student: StudentData;
   onShowBasicInfo: (student: StudentData) => void;
   onShowAttendance: (student: StudentData) => void;
+  onShowPayment: (student: StudentData) => void;
 }
 
-export default function StudentCard({ student, onShowBasicInfo, onShowAttendance }: StudentCardProps) {
+export default function StudentCard({ student, onShowBasicInfo, onShowAttendance, onShowPayment }: StudentCardProps) {
   // Generate initials from name for avatar
   const getInitials = (name: string) => {
     return name
@@ -48,7 +46,10 @@ export default function StudentCard({ student, onShowBasicInfo, onShowAttendance
           >
             出席紀錄
           </button>
-          <button className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+          <button
+            onClick={() => onShowPayment(student)}
+            className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          >
             繳費情形
           </button>
         </div>
